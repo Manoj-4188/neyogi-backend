@@ -6,9 +6,12 @@ from pydantic import BaseModel, Field
 class OversupplyResponse(BaseModel):
     district: str
     crop_type: str
+    total_supply_tonnes: float
+    demand_baseline_tonnes: float
     oversupply_ratio: float
-    severity: str
     alert_level: str
+    recommendation: str
+    severity: str
 
 
 class BestMarketRequest(BaseModel):
