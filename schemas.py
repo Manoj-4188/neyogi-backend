@@ -71,16 +71,39 @@ class SendAlertResponse(BaseModel):
     farmers_notified: int
 
 
-class CropDetectionRequest(BaseModel):
+class CropFeatures(BaseModel):
+    NDVI: float
+    EVI: float
+    NDMI: float
+    SAVI: float
+    NDRE: float
+    GNDVI: float
+    CIG: float
+    LSWI: float
+    NDWI: float
+    BSI: float
+    RENDVI: float
+    B2: float
+    B3: float
+    B4: float
+    B8: float
+    B11: float
+    B12: float
+
+
+class CropDetectRequest(BaseModel):
     latitude: float
     longitude: float
     date: date
+    features: CropFeatures
 
 
 class CropDetectionResponse(BaseModel):
     crop_type: str
     confidence_score: float
-    ndvi_value: float
+    probabilities: dict[str, float] | None = None
+    source: str
+    error: str | None = None
 
 
 class HarvestPredictionRequest(BaseModel):
