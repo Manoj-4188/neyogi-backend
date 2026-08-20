@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Query
-from sqlalchemy.orm import Session
-from fastapi import Depends
+from datetime import datetime
 
-from database import get_db
-from mock_data import MARKETS, price_history
-from schemas import BestMarketRequest, BestMarketResult, PricePoint
+from fastapi import APIRouter
+
+from services.datagov import get_karnataka_market_prices, get_price_timeseries
+from mock_data import MARKETS
+from schemas import BestMarketRequest, BestMarketResult
 
 router = APIRouter(tags=["market"])
 
@@ -27,11 +27,24 @@ def best_market(payload: BestMarketRequest) -> list[BestMarketResult]:
     return sorted(options, key=lambda item: item.net_profit, reverse=True)[:3]
 
 
-@router.get("/market-prices", response_model=list[PricePoint])
+@router.get("/market-prices")
 def get_market_prices(
-    district: str | None = Query(default=None),
-    crop_type: str | None = Query(default=None),
-    db: Session = Depends(get_db),
-) -> list[PricePoint]:
-    del db, crop_type
-    return [PricePoint(**point) for point in price_history(district)]
+    district: str = "all",
+    crop_type: str | None = None,
+) -> dict:
+    del crop_type
+    return {
+        "district": district,
+        "data": get_price_timeseries(district),
+        "source": "data.gov.in - Ministry of Agriculture",
+    }
+
+
+@router.get("/market-prices/current")
+def get_current_prices(district: str = "Karnataka") -> dict:
+    return {
+        "district": district,
+        "prices": get_karnataka_market_prices(district),
+        "source": "data.gov.in - Ministry of Agriculture",
+        "last_updated": datetime.now().isoformat(),
+    }
