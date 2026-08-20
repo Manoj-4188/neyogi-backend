@@ -17,8 +17,8 @@ def fetch_karnataka_prices(commodity: str, limit: int = 100) -> list[dict]:
         "api-key": API_KEY,
         "format": "json",
         "limit": limit,
-        "filters[state]": "Karnataka",
-        "filters[commodity]": commodity,
+        "filters[State.keyword]": "Karnataka",
+        "filters[Commodity.keyword]": commodity,
     }
     try:
         response = requests.get(BASE_URL, params=params, timeout=10)
@@ -57,9 +57,11 @@ def get_karnataka_market_prices(district: str | None = None) -> dict[str, list[d
 def _modal_price(records: list[dict], fallback: float) -> float:
     for record in records:
         try:
-            return float(record.get("modal_price", fallback))
+            price = record.get("Modal_Price") or record.get("modal_price") or record.get("modal price")
+            if price:
+                return float(price)
         except (TypeError, ValueError):
-            continue
+            pass
     return fallback
 
 

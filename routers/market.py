@@ -1,12 +1,15 @@
 from datetime import datetime
 
 from fastapi import APIRouter
+import requests
 
 from services.datagov import get_karnataka_market_prices, get_price_timeseries
 from mock_data import MARKETS
 from schemas import BestMarketRequest, BestMarketResult
 
 router = APIRouter(tags=["market"])
+DATA_GOV_API_KEY = "579b464db66ec23bdd0000010af4365ff84a4fba4f713d24e0ac1693"
+DATA_GOV_BASE_URL = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
 
 
 @router.post("/best-market", response_model=list[BestMarketResult])
@@ -48,3 +51,20 @@ def get_current_prices(district: str = "Karnataka") -> dict:
         "source": "data.gov.in - Ministry of Agriculture",
         "last_updated": datetime.now().isoformat(),
     }
+
+
+@router.get("/market-prices/debug")
+def debug_prices() -> dict:
+    params = {
+        "api-key": DATA_GOV_API_KEY,
+        "format": "json",
+        "limit": 5,
+        "filters[State.keyword]": "Karnataka",
+        "filters[Commodity.keyword]": "Tomato",
+    }
+    try:
+        response = requests.get(DATA_GOV_BASE_URL, params=params, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except (requests.RequestException, ValueError) as error:
+        return {"status": "error", "message": str(error)}
