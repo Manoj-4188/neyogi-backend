@@ -17,8 +17,8 @@ def fetch_karnataka_prices(commodity: str, limit: int = 100) -> list[dict]:
         "api-key": API_KEY,
         "format": "json",
         "limit": limit,
-        "filters[State.keyword]": "Karnataka",
-        "filters[Commodity.keyword]": commodity,
+        "filters[state]": "Karnataka",
+        "filters[commodity]": commodity,
     }
     try:
         response = requests.get(BASE_URL, params=params, timeout=10)
@@ -31,25 +31,18 @@ def fetch_karnataka_prices(commodity: str, limit: int = 100) -> list[dict]:
 
 
 def get_karnataka_market_prices(district: str | None = None) -> dict[str, list[dict]]:
-    """Return current tomato and onion mandi records for Karnataka."""
+    """Return current tomato, onion, and spinach mandi records for Karnataka."""
     results = {}
-    tomato_records = fetch_karnataka_prices("Tomato", 50)
-    if district and district.casefold() != "karnataka":
-        tomato_records = [
-            record for record in tomato_records
-            if district.casefold() in record.get("district", "").casefold()
-        ]
-    if tomato_records:
-        results["tomato"] = tomato_records
 
-    onion_records = fetch_karnataka_prices("Onion", 50)
-    if district and district.casefold() != "karnataka":
-        onion_records = [
-            record for record in onion_records
-            if district.casefold() in record.get("district", "").casefold()
-        ]
-    if onion_records:
-        results["onion"] = onion_records
+    for commodity, result_key in (("Tomato", "tomato"), ("Onion", "onion"), ("Spinach", "leafy_greens")):
+        records = fetch_karnataka_prices(commodity, 50)
+        if district and district.casefold() != "karnataka":
+            records = [
+                record for record in records
+                if district.casefold() in record.get("District", "").casefold()
+            ]
+        if records:
+            results[result_key] = records
 
     return results
 
@@ -57,7 +50,7 @@ def get_karnataka_market_prices(district: str | None = None) -> dict[str, list[d
 def _modal_price(records: list[dict], fallback: float) -> float:
     for record in records:
         try:
-            price = record.get("Modal_Price") or record.get("modal_price") or record.get("modal price")
+            price = record.get("Modal_x0020_Price", 0)
             if price:
                 return float(price)
         except (TypeError, ValueError):
@@ -70,7 +63,7 @@ def get_price_timeseries(district: str = "all") -> list[dict]:
     real_prices = get_karnataka_market_prices(district)
     tomato_current = _modal_price(real_prices.get("tomato", []), 1200)
     onion_current = _modal_price(real_prices.get("onion", []), 850)
-    leafy_current = 600.0
+    leafy_current = _modal_price(real_prices.get("leafy_greens", []), 600)
     random_generator = random.Random(f"neyogi-{district}")
     tomato_price = tomato_current * 0.85
     onion_price = onion_current * 0.90

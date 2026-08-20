@@ -59,8 +59,8 @@ def debug_prices() -> dict:
         "api-key": DATA_GOV_API_KEY,
         "format": "json",
         "limit": 5,
-        "filters[State.keyword]": "Karnataka",
-        "filters[Commodity.keyword]": "Tomato",
+        "filters[state]": "Karnataka",
+        "filters[commodity]": "Tomato",
     }
     try:
         response = requests.get(DATA_GOV_BASE_URL, params=params, timeout=10)
