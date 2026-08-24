@@ -3,11 +3,10 @@ import random
 from datetime import datetime, timedelta
 
 import requests
+from dotenv import load_dotenv
 
-API_KEY = os.getenv(
-    "DATAGOV_API_KEY",
-    "579b464db66ec23bdd0000010af4365ff84a4fba4f713d24e0ac1693",
-)
+load_dotenv()
+API_KEY = os.getenv("DATAGOV_API_KEY", "")
 BASE_URL = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
 
 
