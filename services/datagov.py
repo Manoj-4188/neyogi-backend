@@ -31,10 +31,15 @@ def fetch_karnataka_prices(commodity: str, limit: int = 100) -> list[dict]:
 
 
 def get_karnataka_market_prices(district: str | None = None) -> dict[str, list[dict]]:
-    """Return current tomato, onion, and spinach mandi records for Karnataka."""
+    """Return current tomato, onion, potato, and spinach mandi records for Karnataka."""
     results = {}
 
-    for commodity, result_key in (("Tomato", "tomato"), ("Onion", "onion"), ("Spinach", "leafy_greens")):
+    for commodity, result_key in (
+        ("Tomato", "tomato"),
+        ("Onion", "onion"),
+        ("Potato", "potato"),
+        ("Spinach", "leafy_greens"),
+    ):
         records = fetch_karnataka_prices(commodity, 50)
         if district and district.casefold() != "karnataka":
             records = [
@@ -63,10 +68,12 @@ def get_price_timeseries(district: str = "all") -> list[dict]:
     real_prices = get_karnataka_market_prices(district)
     tomato_current = _modal_price(real_prices.get("tomato", []), 1200)
     onion_current = _modal_price(real_prices.get("onion", []), 850)
+    potato_current = _modal_price(real_prices.get("potato", []), 700)
     leafy_current = _modal_price(real_prices.get("leafy_greens", []), 600)
     random_generator = random.Random(f"neyogi-{district}")
     tomato_price = tomato_current * 0.85
     onion_price = onion_current * 0.90
+    potato_price = potato_current * 0.92
     leafy_price = leafy_current * 0.95
     today = datetime.now()
     timeseries = []
@@ -74,12 +81,13 @@ def get_price_timeseries(district: str = "all") -> list[dict]:
     for index in range(90):
         tomato_price += random_generator.gauss(0, 25) + (tomato_current - tomato_price) * 0.03
         onion_price += random_generator.gauss(0, 15) + (onion_current - onion_price) * 0.03
+        potato_price += random_generator.gauss(0, 12) + (potato_current - potato_price) * 0.03
         leafy_price += random_generator.gauss(0, 10) + (leafy_current - leafy_price) * 0.03
         timeseries.append({
             "date": (today - timedelta(days=90 - index)).strftime("%Y-%m-%d"),
             "tomato_price": round(max(200, tomato_price), 2),
             "onion_price": round(max(150, onion_price), 2),
-            "potato_price": round(max(150, leafy_price), 2),
+            "potato_price": round(max(150, potato_price), 2),
             "leafy_greens_price": round(max(100, leafy_price), 2),
         })
     return timeseries
