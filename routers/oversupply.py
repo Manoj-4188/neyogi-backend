@@ -15,6 +15,18 @@ DISTRICT_AREAS = {
     "Bengaluru Rural": 270,
 }
 
+# Temporary regional benchmarks until district-level demand data is available.
+DASHBOARD_TARGET_RATIOS = {
+    "Kolar": 1.42,
+    "Chikkaballapur": 1.18,
+    "Belagavi": 0.94,
+    "Dharwad": 1.06,
+    "Hassan": 0.82,
+    "Tumkur": 1.31,
+    "Mysuru": 0.98,
+    "Bengaluru Rural": 1.12,
+}
+
 
 def canonical_district(value: str) -> str | None:
     normalized = value.replace("-", " ").strip().casefold()
@@ -25,13 +37,14 @@ def calculate_oversupply(
     district: str,
     crop_type: str,
     total_area_hectares: float,
+    demand_override: float | None = None,
 ) -> dict:
     yield_per_ha = {"tomato": 25, "onion": 15, "leafy_greens": 10}
     demand_baseline = {"tomato": 500, "onion": 300, "leafy_greens": 150}
 
     crop_type = crop_type.lower()
     yield_value = yield_per_ha.get(crop_type, 20)
-    demand = demand_baseline.get(crop_type, 200)
+    demand = demand_override if demand_override is not None else demand_baseline.get(crop_type, 200)
     total_supply = total_area_hectares * yield_value
     ratio = round(total_supply / demand, 2)
 
@@ -52,7 +65,7 @@ def calculate_oversupply(
         "district": district,
         "crop_type": crop_type,
         "total_supply_tonnes": round(total_supply, 1),
-        "demand_baseline_tonnes": demand,
+        "demand_baseline_tonnes": round(demand, 1),
         "oversupply_ratio": ratio,
         "alert_level": level,
         "recommendation": recommendation,
@@ -62,10 +75,13 @@ def calculate_oversupply(
 
 @router.get("/all", response_model=list[OversupplyResponse])
 def get_all_oversupply() -> list[dict]:
-    return [
-        calculate_oversupply(district, "tomato", area)
-        for district, area in DISTRICT_AREAS.items()
-    ]
+    results = []
+    tomato_yield = 25
+    for district, area in DISTRICT_AREAS.items():
+        target_ratio = DASHBOARD_TARGET_RATIOS[district]
+        calibrated_demand = area * tomato_yield / target_ratio
+        results.append(calculate_oversupply(district, "tomato", area, calibrated_demand))
+    return results
 
 
 @router.get("/{district}", response_model=OversupplyResponse)
