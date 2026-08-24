@@ -6,3 +6,4 @@ python-dotenv
 pydantic
 joblib
 requests
+beautifulsoup4
