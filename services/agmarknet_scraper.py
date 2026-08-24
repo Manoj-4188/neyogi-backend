@@ -1,4 +1,5 @@
 import re
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 import requests
@@ -37,7 +38,7 @@ def fetch_live_price(
         "Tx_MarketHead": "0",
     }
     try:
-        response = requests.get(AGMARKNET_URL, params=params, headers=HEADERS, timeout=15)
+        response = requests.get(AGMARKNET_URL, params=params, headers=HEADERS, timeout=5)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
         table = soup.find("table", {"id": "cphBody_GridPriceData"})
@@ -72,9 +73,10 @@ def fetch_live_price(
 def get_karnataka_prices_all() -> dict[str, list[dict]]:
     """Get current tomato, onion, and spinach prices for Karnataka."""
     results = {}
-    for crop in ("Tomato", "Onion", "Spinach"):
-        records = fetch_live_price(crop, "Karnataka")
+    crops = (("Tomato", "tomato"), ("Onion", "onion"), ("Spinach", "leafy_greens"))
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        responses = executor.map(lambda item: (item[1], fetch_live_price(item[0], "Karnataka")), crops)
+    for crop_key, records in responses:
         if records:
-            crop_key = "leafy_greens" if crop == "Spinach" else crop.lower()
             results[crop_key] = records
     return results
