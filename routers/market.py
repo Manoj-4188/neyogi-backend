@@ -34,7 +34,7 @@ def get_market_prices(
     tomato_base = _modal_price(live, 1200)
     onion_base = _modal_price(fetch_live_price("Onion", "Karnataka"), 850)
     leafy_base = _modal_price(fetch_live_price("Spinach", "Karnataka"), 600)
-    potato_base = _modal_price(fetch_live_price("Potato", "Karnataka"), 700)
+    potato_base = 700
     random_generator = random.Random(42)
     tomato_price, onion_price = tomato_base * 0.85, onion_base * 0.90
     leafy_price, potato_price = leafy_base * 0.95, potato_base * 0.92
